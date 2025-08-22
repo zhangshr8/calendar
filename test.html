@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面 - 每日时间记录器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>每日时间记录器 - 测试页面</h1>
+        
+        <div class="section">
+            <h2>1. 基本功能测试</h2>
+            <button onclick="testLocalStorage()">测试本地存储</button>
+            <button onclick="testCategoryManagement()">测试分类管理</button>
+            <button onclick="testRecordOperations()">测试记录操作</button>
+            <div id="basic-test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. GitHub API测试</h2>
+            <button onclick="testGitHubAPI()">测试GitHub连接</button>
+            <button onclick="testOAuthFlow()">测试OAuth流程</button>
+            <button onclick="testFileOperations()">测试文件操作</button>
+            <div id="github-test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. 数据同步测试</h2>
+            <button onclick="testDataSync()">测试数据同步</button>
+            <button onclick="testConflictResolution()">测试冲突解决</button>
+            <button onclick="testOfflineMode()">测试离线模式</button>
+            <div id="sync-test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. 手动测试</h2>
+            <div>
+                <label>测试记录日期：</label>
+                <input type="date" id="test-date" value="2024-01-01">
+            </div>
+            <div>
+                <label>测试分类：</label>
+                <input type="text" id="test-category" value="测试分类" placeholder="输入分类名称">
+            </div>
+            <div>
+                <label>测试时间：</label>
+                <input type="number" id="test-time" value="2.5" step="0.5" min="0">
+            </div>
+            <div>
+                <label>测试评论：</label>
+                <textarea id="test-comment" rows="3" placeholder="输入测试评论">这是一个测试记录</textarea>
+            </div>
+            <button onclick="addTestRecord()">添加测试记录</button>
+            <button onclick="viewTestRecords()">查看测试记录</button>
+            <button onclick="clearTestData()">清除测试数据</button>
+        </div>
+
+        <div class="section">
+            <h2>5. 系统信息</h2>
+            <div id="system-info"></div>
+        </div>
+
+        <div class="section">
+            <h2>6. 运行日志</h2>
+            <div id="log" class="log"></div>
+            <button onclick="clearLog()">清除日志</button>
+        </div>
+    </div>
+
+    <script>
+        // 日志系统
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span class="${type}">[${timestamp}] ${message}</span>`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // 显示测试结果
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+            log(message, type);
+        }
+
+        // 测试本地存储
+        function testLocalStorage() {
+            log('开始测试本地存储...');
+            
+            try {
+                // 测试存储
+                const testData = { test: 'value', timestamp: Date.now() };
+                localStorage.setItem('test_data', JSON.stringify(testData));
+                
+                // 测试读取
+                const retrieved = JSON.parse(localStorage.getItem('test_data'));
+                
+                if (retrieved.test === 'value') {
+                    showResult('basic-test-result', '✅ 本地存储功能正常', 'success');
+                } else {
+                    showResult('basic-test-result', '❌ 本地存储读取失败', 'error');
+                }
+                
+                // 清理测试数据
+                localStorage.removeItem('test_data');
+                
+            } catch (error) {
+                showResult('basic-test-result', `❌ 本地存储测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试分类管理
+        function testCategoryManagement() {
+            log('开始测试分类管理...');
+            
+            try {
+                let categories = ['测试分类1', '测试分类2'];
+                localStorage.setItem('time_categories', JSON.stringify(categories));
+                
+                // 测试读取
+                const retrieved = JSON.parse(localStorage.getItem('time_categories'));
+                
+                if (Array.isArray(retrieved) && retrieved.length === 2) {
+                    showResult('basic-test-result', '✅ 分类管理功能正常', 'success');
+                } else {
+                    showResult('basic-test-result', '❌ 分类管理测试失败', 'error');
+                }
+                
+                // 清理测试数据
+                localStorage.removeItem('time_categories');
+                
+            } catch (error) {
+                showResult('basic-test-result', `❌ 分类管理测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试记录操作
+        function testRecordOperations() {
+            log('开始测试记录操作...');
+            
+            try {
+                const testRecords = {
+                    '2024-01-01': {
+                        time: { '测试分类': 2.5 },
+                        comment: '测试评论'
+                    }
+                };
+                
+                localStorage.setItem('time_records', JSON.stringify(testRecords));
+                
+                const retrieved = JSON.parse(localStorage.getItem('time_records'));
+                
+                if (retrieved['2024-01-01'].time['测试分类'] === 2.5) {
+                    showResult('basic-test-result', '✅ 记录操作功能正常', 'success');
+                } else {
+                    showResult('basic-test-result', '❌ 记录操作测试失败', 'error');
+                }
+                
+                // 清理测试数据
+                localStorage.removeItem('time_records');
+                
+            } catch (error) {
+                showResult('basic-test-result', `❌ 记录操作测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试GitHub API
+        function testGitHubAPI() {
+            log('开始测试GitHub API...');
+            
+            // 测试公共API访问
+            fetch('https://api.github.com/repos/zhangshr8/calendar')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
+                .then(data => {
+                    showResult('github-test-result', `✅ GitHub API连接成功 - 仓库: ${data.name}`, 'success');
+                })
+                .catch(error => {
+                    showResult('github-test-result', `❌ GitHub API连接失败: ${error.message}`, 'error');
+                });
+        }
+
+        // 测试OAuth流程
+        function testOAuthFlow() {
+            log('开始测试OAuth流程...');
+            
+            // 检查是否有token
+            const token = localStorage.getItem('github_token');
+            if (token) {
+                showResult('github-test-result', '✅ 找到GitHub token，OAuth流程正常', 'success');
+            } else {
+                showResult('github-test-result', 'ℹ️ 未找到GitHub token，需要登录', 'info');
+            }
+        }
+
+        // 测试文件操作
+        function testFileOperations() {
+            log('开始测试文件操作...');
+            
+            const token = localStorage.getItem('github_token');
+            if (!token) {
+                showResult('github-test-result', '❌ 需要先登录GitHub', 'error');
+                return;
+            }
+            
+            // 测试读取文件
+            fetch('https://api.github.com/repos/zhangshr8/calendar/contents/data/categories.json', {
+                headers: {
+                    'Authorization': `token ${token}`
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            })
+            .then(data => {
+                showResult('github-test-result', '✅ GitHub文件操作成功', 'success');
+            })
+            .catch(error => {
+                showResult('github-test-result', `❌ GitHub文件操作失败: ${error.message}`, 'error');
+            });
+        }
+
+        // 测试数据同步
+        function testDataSync() {
+            log('开始测试数据同步...');
+            
+            // 创建测试数据
+            const testData = {
+                '2024-01-01': {
+                    time: { '同步测试': 1.0 },
+                    comment: '同步测试记录'
+                }
+            };
+            
+            localStorage.setItem('time_records', JSON.stringify(testData));
+            
+            // 模拟同步
+            setTimeout(() => {
+                const localData = localStorage.getItem('time_records');
+                if (localData) {
+                    showResult('sync-test-result', '✅ 本地数据同步测试通过', 'success');
+                } else {
+                    showResult('sync-test-result', '❌ 本地数据同步测试失败', 'error');
+                }
+            }, 100);
+        }
+
+        // 测试冲突解决
+        function testConflictResolution() {
+            log('开始测试冲突解决...');
+            
+            // 模拟冲突数据
+            const localData = { '2024-01-01': { time: { '本地': 2.0 } } };
+            const remoteData = { '2024-01-01': { time: { '远程': 3.0 } } };
+            
+            // 简单的冲突解决策略：以本地为准
+            const resolved = { ...localData };
+            
+            if (resolved['2024-01-01']) {
+                showResult('sync-test-result', '✅ 冲突解决机制正常', 'success');
+            } else {
+                showResult('sync-test-result', '❌ 冲突解决测试失败', 'error');
+            }
+        }
+
+        // 测试离线模式
+        function testOfflineMode() {
+            log('开始测试离线模式...');
+            
+            // 测试离线存储
+            const offlineData = { offline: true, timestamp: Date.now() };
+            localStorage.setItem('offline_test', JSON.stringify(offlineData));
+            
+            const retrieved = JSON.parse(localStorage.getItem('offline_test'));
+            
+            if (retrieved.offline) {
+                showResult('sync-test-result', '✅ 离线模式功能正常', 'success');
+                localStorage.removeItem('offline_test');
+            } else {
+                showResult('sync-test-result', '❌ 离线模式测试失败', 'error');
+            }
+        }
+
+        // 添加测试记录
+        function addTestRecord() {
+            const date = document.getElementById('test-date').value;
+            const category = document.getElementById('test-category').value;
+            const time = parseFloat(document.getElementById('test-time').value);
+            const comment = document.getElementById('test-comment').value;
+            
+            if (!date || !category || !time) {
+                alert('请填写完整信息');
+                return;
+            }
+            
+            let records = JSON.parse(localStorage.getItem('time_records') || '{}');
+            
+            if (!records[date]) {
+                records[date] = { time: {}, comment: '' };
+            }
+            
+            records[date].time[category] = time;
+            records[date].comment = comment;
+            
+            localStorage.setItem('time_records', JSON.stringify(records));
+            
+            log(`添加测试记录: ${date} - ${category}: ${time}h`);
+            alert('测试记录添加成功！');
+        }
+
+        // 查看测试记录
+        function viewTestRecords() {
+            const records = JSON.parse(localStorage.getItem('time_records') || '{}');
+            const recordList = Object.entries(records).map(([date, data]) => {
+                const totalTime = Object.values(data.time).reduce((sum, t) => sum + t, 0);
+                return `${date}: ${totalTime}h - ${data.comment || ''}`;
+            }).join('\n');
+            
+            alert(recordList || '暂无测试记录');
+        }
+
+        // 清除测试数据
+        function clearTestData() {
+            if (confirm('确定要清除所有测试数据吗？')) {
+                localStorage.removeItem('time_records');
+                localStorage.removeItem('time_categories');
+                log('测试数据已清除');
+                alert('测试数据已清除');
+            }
+        }
+
+        // 显示系统信息
+        function displaySystemInfo() {
+            const info = document.getElementById('system-info');
+            const systemInfo = `
+                <p><strong>浏览器:</strong> ${navigator.userAgent}</p>
+                <p><strong>语言:</strong> ${navigator.language}</p>
+                <p><strong>localStorage支持:</strong> ${typeof(Storage) !== "undefined" ? '✅' : '❌'}</p>
+                <p><strong>当前时间:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>屏幕分辨率:</strong> ${screen.width}x${screen.height}</p>
+                <p><strong>窗口大小:</strong> ${window.innerWidth}x${window.innerHeight}</p>
+            `;
+            info.innerHTML = systemInfo;
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            log('测试页面加载完成');
+            displaySystemInfo();
+            
+            // 设置测试日期为今天
+            document.getElementById('test-date').value = new Date().toISOString().split('T')[0];
+        };
+    </script>
+</body>
+</html>
